@@ -8,13 +8,14 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     git \
     python3-boto3 \
-    awscli \
     postgresql-plpython3-16
 
 # Clone the postgres-aws-s3 repository and install the extension
-RUN git clone https://github.com/chimpler/postgres-aws-s3.git /usr/src/postgres-aws-s3 && \
-    cd /usr/src/postgres-aws-s3 && \
-    make && \
+RUN git clone https://github.com/chimpler/postgres-aws-s3.git /usr/src/postgres-aws-s3
+WORKDIR /usr/src/postgres-aws-s3
+COPY aws_s3* .
+COPY Makefile .
+RUN make && \
     make install
 
 # Create the plpython3u and aws_s3 extensions in the default database
