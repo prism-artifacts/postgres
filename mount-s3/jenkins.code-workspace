@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../jenkins"
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../java"
+		}
+	],
+	"settings": {}
+}
