@@ -1,5 +1,5 @@
 # Use the official PostgreSQL 16 image as the base
-FROM postgres:16
+FROM public.ecr.aws/docker/library/postgres:latest
 
 # Install required packages
 RUN apt-get update && apt-get install -y \
