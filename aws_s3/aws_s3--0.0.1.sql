@@ -110,31 +110,38 @@ CREATE OR REPLACE FUNCTION aws_s3.table_import_from_s3(
    table_name text,
    column_list text,
    options text,
-   s3_info aws_commons._s3_uri_1,
-   credentials aws_commons._aws_credentials_1,
-   endpoint_url text default null
-) RETURNS INT
+   s3_info aws_commons._s3_uri_1
+) RETURNS TEXT
 LANGUAGE plpython3u
 AS $$
 
-    plan = plpy.prepare(
-        'SELECT aws_s3.table_import_from_s3($1, $2, $3, $4, $5, $6, $7, $8, $9) AS num_rows',
-        ['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']
-    )
-    return plan.execute(
-        [
-            table_name,
-            column_list,
-            options,
-            s3_info['bucket'],
-            s3_info['file_path'],
-            s3_info['region'],
-            credentials['access_key'],
-            credentials['secret_key'],
-            credentials['session_token'],
-	        endpoint_url
-        ]
-    )[0]['num_rows']
+import boto3
+s3 = boto3.client('s3')
+
+plan = plpy.prepare(
+    'SELECT aws_s3.table_import_from_s3($1, $2, $3, $4, $5, $6) AS num_rows',
+    ['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT']
+)
+
+result = plan.execute(
+    [
+        table_name,
+        column_list,
+        options,
+        s3_info['bucket'],
+        s3_info['file_path'],
+        s3_info['region']
+    ]
+)
+
+num_rows = result[0]['num_rows']
+
+response = s3.head_object(Bucket=s3_info['bucket'], Key=s3_info['file_path'])
+file_size = response['ContentLength']
+
+return '{} rows imported into relation "{}" from file {} of {} bytes'.format(
+    num_rows, table_name, s3_info['file_path'], file_size
+)
 $$;
 
 CREATE OR REPLACE FUNCTION aws_s3.query_export_to_s3(
